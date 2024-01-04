@@ -1,0 +1,325 @@
+(function () {
+  var AJAX_ENDPOINT = "/apps/dd";
+
+  var shopifyDetails = window.Shopify;
+
+  if (document.readyState !== "loading") {
+    launchDDOrderCheck();
+  } else {
+    document.addEventListener("DOMContentLoaded", function () {
+      launchDDOrderCheck();
+    });
+  }
+
+  function launchDDOrderCheck() {
+    // Check if we are on the order_confirmation page
+    if (
+      shopifyDetails &&
+      shopifyDetails.Checkout &&
+      (shopifyDetails.Checkout.isOrderStatusPage ||
+        (shopifyDetails.Checkout.page &&
+          (shopifyDetails.Checkout.page == "thank_you" || shopifyDetails.Checkout.page == "checkout_one_thank_you")))
+    ) {
+      var orderId = "-";
+      var customerId = __st ? __st.cid : null;
+
+      if (shopifyDetails.checkout && shopifyDetails.checkout.order_id) {
+        orderId = shopifyDetails.checkout.order_id;
+      } else if (window.ddConfig && window.ddConfig.order_id) {
+        orderId = window.ddConfig.order_id;
+      }
+
+      // Add the loading spinner CSS
+      var ddStyles =
+        "\
+          .lds-ring {\
+            display: inline-block;\
+            position: relative;\
+            width: 80px;\
+            height: 80px;\
+            left: 50%;\
+            transform: translate(-50%, 0);\
+            position: absolute;\
+            top: 10%;\
+          }\
+          .lds-ring div {\
+            box-sizing: border-box;\
+            display: block;\
+            position: absolute;\
+            width: 64px;\
+            height: 64px;\
+            margin: 8px;\
+            border: 5px solid #888;\
+            border-radius: 50%;\
+            animation: lds-ring 1.2s cubic-bezier(0.5, 0, 0.5, 1) infinite;\
+            border-color: #888 transparent transparent transparent;\
+          }\
+          .lds-ring div:nth-child(1) {\
+            animation-delay: -0.45s;\
+          }\
+          .lds-ring div:nth-child(2) {\
+            animation-delay: -0.3s;\
+          }\
+          .lds-ring div:nth-child(3) {\
+            animation-delay: -0.15s;\
+          }\
+          .dd-loader {\
+            display: inline-block;\
+            position: relative;\
+            width: 34px;\
+            height: 20px;\
+            flex-shrink: 0;\
+          }\
+          .dd-loader div {\
+            box-sizing: border-box;\
+            display: block;\
+            position: absolute;\
+            width: 18px;\
+            height: 18px;\
+            border: 2px solid #888;\
+            border-radius: 50%;\
+            animation: lds-ring 1.2s cubic-bezier(0.5, 0, 0.5, 1) infinite;\
+            border-color: #888 transparent transparent transparent;\
+          }\
+          .dd-loader div:nth-child(1) {\
+            animation-delay: -0.45s;\
+          }\
+          .dd-loader div:nth-child(2) {\
+            animation-delay: -0.3s;\
+          }\
+          .dd-loader div:nth-child(3) {\
+            animation-delay: -0.15s;\
+          }\
+          @keyframes lds-ring {\
+            0% {\
+              transform: rotate(0deg);\
+            }\
+            100% {\
+              transform: rotate(360deg);\
+            }\
+          }\
+          @keyframes fadeIn {\
+              0% { opacity: 0; }\
+              100% { opacity: 1; }\
+          }\
+          @keyframes fadeOut {\
+              0% { opacity: 1; }\
+              100% { opacity: 0; }\
+          }";
+
+      document.head.insertAdjacentHTML("beforeend", "<style>" + ddStyles + "</style>");
+
+      loadOrder();
+    }
+
+    async function addBanner() {
+      const host = window.Shopify.shop;
+
+      const ddLoadingBanner = document.querySelector(".dd-loading-banner");
+
+      // Dont show for this shop or if banner is already here
+      if (ddLoadingBanner || host === "kompose-audio.myshopify.com") {
+        return;
+      }
+
+      let fetchUrl = AJAX_ENDPOINT + "/checkout_page_config?host=" + host;
+
+      const loadingText = await fetch(fetchUrl, {
+        method: "GET",
+        headers: {},
+      })
+        .then((response) => response.json())
+        .then((data) => {
+          return data.loading_banner_text;
+        })
+        .catch(function () {
+          return "We are preparing your download. Don't leave this page. It can take up to 3 min. You will also receive an email with your downloads.";
+        });
+
+      var bannerDom = document.createElement("div");
+      bannerDom.innerHTML =
+        "\
+        <div style='display: flex; align-items: center; border: 1px solid #96c6cc; background-color: #ebf9fb; padding: 12px 16px; border-radius: 0.5rem; margin-bottom: 10px;' class='dd-loading-banner'>\
+        <div class='dd-loader'>\
+        <div></div><div></div><div></div><div></div>\
+        </div>\
+        <div>" +
+        loadingText +
+        "</div>\
+        </div>";
+      document.querySelector(".order-summary__sections").prepend(bannerDom);
+    }
+
+    function isLocalStorageAvailable() {
+      var test = "test";
+      try {
+        localStorage.setItem(test, test);
+        localStorage.removeItem(test);
+        return true;
+      } catch (e) {
+        return false;
+      }
+    }
+
+    function displayError() {
+      var productTable = document.querySelector(".product-table");
+      var orderInfoDom = document.createElement("div");
+      var message = "For orders with digital content, expect an email with downloads and/or license keys shortly.";
+
+      var orderInfosMessage = "";
+      orderInfosMessage +=
+        "<div style='postion: relative; color: #fff; background-color: #555; text-align: center; position: relative; padding: 12px 15px; line-height: 22px; margin-bottom: 26px; border-radius: .25rem;'>";
+      orderInfosMessage += "<div style=''>" + message + "</div></div>";
+      orderInfosMessage += "</div>";
+
+      orderInfoDom.innerHTML = orderInfosMessage;
+      productTable.before(orderInfoDom);
+    }
+
+    function loadOrder() {
+      showLoadingState();
+
+      let getOrderOptions = {
+        method: "GET",
+        headers: {},
+      };
+
+      const host = window.Shopify.shop;
+
+      // Order variant ids
+      let variantIds = [];
+      if (Shopify?.checkout?.line_items) {
+        variantIds = Shopify.checkout.line_items.map((lineItem) => lineItem.variant_id);
+      }
+
+      let fetchUrl = AJAX_ENDPOINT + "/order_status?host=" + host + "&vids=" + variantIds.join(",");
+      if (customerId) {
+        fetchUrl += "&customer_id=" + customerId;
+      }
+      if (orderId) {
+        fetchUrl += "&order_id=" + orderId;
+      } else {
+        // Order id is mandatory for the request
+        hideLoadingState();
+        displayError();
+        return;
+      }
+
+      fetch(fetchUrl, getOrderOptions)
+        .then((response) => response.json())
+        .then((data) => {
+          hideLoadingState();
+          if (data?.show_loading_banner) {
+            try {
+              addBanner();
+            } catch (e) {}
+          }
+          if (data && data.order_lines && data.order_lines.length > 0) {
+            updateOrderView(data.order_lines, data.config);
+          } else if (data && data.order_lines && data.order_lines.length === 0) {
+            if (isLocalStorageAvailable()) {
+              var refreshAfterDelay = false;
+              var refreshDelay = 6000;
+              var refreshRetry = 30;
+              var ddLocalStorage = localStorage.getItem("dd_order_" + orderId);
+              if (ddLocalStorage) {
+                var parsedJson = JSON.parse(ddLocalStorage);
+                if (parsedJson.refresh_count < refreshRetry) {
+                  localStorage.setItem(
+                    "dd_order_" + orderId,
+                    JSON.stringify({
+                      order_id: orderId,
+                      refresh_count: parsedJson.refresh_count + 1,
+                    })
+                  );
+                  refreshAfterDelay = true;
+                }
+              } else {
+                localStorage.setItem("dd_order_" + orderId, JSON.stringify({ order_id: orderId, refresh_count: 0 }));
+                refreshAfterDelay = true;
+              }
+
+              if (refreshAfterDelay) {
+                setTimeout(() => {
+                  loadOrder();
+                }, refreshDelay);
+              }
+            }
+          }
+        })
+        .catch(function () {
+          hideLoadingState();
+          displayError();
+        });
+    }
+
+    function showLoadingState() {
+      var loadingDom = document.createElement("div");
+
+      loadingDom.innerHTML =
+        "\
+          <div style='opacity: 0;animation: fadeIn 0.5s;height: 100%; position: absolute; top: 0; bottom: 0; left: 0px; right: -20px; z-index: 9999; background: rgba(255,255,255,0.7);' class='dd-loading'>\
+              <div class='lds-ring'>\
+              <div></div><div></div><div></div><div></div>\
+              </div>\
+          </div>";
+
+      document.querySelector(".sidebar").appendChild(loadingDom);
+
+      var ddLoader = document.querySelector(".dd-loading");
+      ddLoader.style.opacity = "1";
+    }
+
+    function hideLoadingState() {
+      var ddLoader = document.querySelector(".dd-loading");
+
+      if (ddLoader) {
+        ddLoader.style.animation = "fadeOut 0.5s";
+        ddLoader.style.opacity = "0";
+
+        setTimeout(function () {
+          ddLoader.remove();
+        }, 1000);
+      }
+    }
+
+    function updateOrderView(data, config) {
+      // var order_summary_section_content_dom = document.querySelector(
+      //   ".order-summary__section__content"
+      // );
+
+      // Hide loading banner if we have the order info
+      var ddLoadingBanner = document.querySelector(".dd-loading-banner");
+      if (ddLoadingBanner) {
+        ddLoadingBanner.remove();
+      }
+
+      var downloadBtnStyle =
+        "padding:7px 11px; font-size: 12px; width: 100%; background: " +
+        (config.btn_color ? config.btn_color : "#333333") +
+        "; color: white;";
+
+      data.forEach(function (line) {
+        if (!line.variant_ids || !Array.isArray(line.variant_ids)) {
+          return;
+        }
+        // Check for every product variants
+        line.variant_ids.forEach(function (variant_id) {
+          var trLine = document.querySelector(
+            "tr[data-product-id='" + line.product_id + "'][data-variant-id='" + variant_id + "']"
+          );
+          if (trLine) {
+            trLine.insertAdjacentHTML(
+              "afterend",
+              "<tr><td style='padding:15px 0;text-align:left;' colspan='6'><a class='btn' target='_blank' href='" +
+                line.download_url +
+                "' style='" +
+                downloadBtnStyle +
+                ";'>Download</a></td></tr>"
+            );
+          }
+        });
+      });
+    }
+  }
+})();

@@ -1,0 +1,160 @@
+/** Shopify CDN: Minification failed
+
+Line 21:4 Transforming let to the configured target environment ("es5") is not supported yet
+Line 23:4 Transforming let to the configured target environment ("es5") is not supported yet
+Line 24:4 Transforming let to the configured target environment ("es5") is not supported yet
+Line 25:4 Transforming let to the configured target environment ("es5") is not supported yet
+Line 26:4 Transforming let to the configured target environment ("es5") is not supported yet
+Line 29:4 Transforming let to the configured target environment ("es5") is not supported yet
+Line 33:9 Transforming let to the configured target environment ("es5") is not supported yet
+Line 33:18 Transforming for-of loops to the configured target environment ("es5") is not supported yet
+Line 34:5 Transforming let to the configured target environment ("es5") is not supported yet
+Line 35:5 Transforming let to the configured target environment ("es5") is not supported yet
+... and 39 more hidden warnings
+
+**/
+			function trim(str) {
+				return str.replace(/(^\s*)|(\s*$)/g,"");
+			}
+
+			function init_amz_img_words(wrapper_flag) {
+				let wrapper = document.querySelector(wrapper_flag);
+				if (!wrapper) return false;
+				let ary_data = [];
+				let ary_item = wrapper.querySelectorAll(".item");
+				let action_wrapper = document.createElement("div");
+				let content_wrapper = document.createElement("div");
+				content_wrapper.className = "content_wrapper";
+				action_wrapper.appendChild(content_wrapper);
+				let trigger_wrapper = document.createElement("div");
+				trigger_wrapper.className = "trigger_wrapper";
+				action_wrapper.appendChild(trigger_wrapper);
+				action_wrapper.className = "amazon_img_words_action_wrapper";
+				for (let item of ary_item) {
+					let img = item.querySelector("img");
+					let h4 = item.querySelector("h4");
+					let p = item.querySelector("p");
+					let data = new Object;
+					data.img = img;
+					data.h4 = h4;
+					data.p = p;
+					ary_data.push(data);
+				}
+				let first_falg = true;
+				for (let data of ary_data) {
+					let content = document.createElement("div");
+					if (first_falg)
+						content.setAttribute("active", "active");
+					content.className = "item";
+					content.appendChild(data.img.cloneNode(true));
+					let right_block = document.createElement("div");
+					right_block.className = "right_block";
+					right_block.appendChild(data.h4.cloneNode(true));
+					right_block.appendChild(data.p.cloneNode(true));
+					content.appendChild(right_block);
+					content_wrapper.appendChild(content);
+					let trigger = data.img.cloneNode(true);
+					if (first_falg) {
+						trigger.setAttribute("active", "active");
+						first_falg = false;
+					}
+					trigger_wrapper.appendChild(trigger);
+				}
+				document.querySelector(".amz_pdt_desc_total_wrapper").appendChild(action_wrapper);
+
+				let ary_content = content_wrapper.querySelectorAll(".item");
+				let ary_trigger = trigger_wrapper.querySelectorAll("img");
+				for (let i = 0; i < ary_trigger.length; i++) {
+					ary_trigger[i].addEventListener("click", function() {
+						if (ary_trigger[i].getAttribute("active") != "active") {
+							for (let j = 0; j < ary_trigger.length; j++) {
+								if (j != i) {
+									ary_trigger[j].removeAttribute("active");
+									ary_content[j].removeAttribute("active");
+								}
+							}
+							ary_trigger[i].setAttribute("active", "active");
+							ary_content[i].setAttribute("active", "active");
+						}
+					})
+				}
+			}
+
+
+
+		init_amz_img_words(".amz_img_words");
+
+
+
+
+			function init_amz_comparison(wrapper_flag) {
+				let wrapper = document.querySelector(wrapper_flag);
+				if (!wrapper) return false;
+				let ary_pdt_img = wrapper.querySelectorAll(".product_img_wrapper img");
+				let ary_pdt_title = wrapper.querySelectorAll(".product_title_wrapper h4");
+				let ary_pdt_attr_name = wrapper.querySelectorAll(".product_attr_name_wrapper h4");
+				let ary_pdt_attr_value = wrapper.querySelectorAll(".product_attr_value_wrapper>.item");
+				let ary_pdt_link=wrapper.querySelectorAll(".product_link_wrapper>div");
+				let table = document.createElement("table");
+				table.className = "pdt_compare_table";
+				table.setAttribute("cellpadding", "0");
+				table.setAttribute("cellspacing", "0");
+				let tr_pdt_img = document.createElement("tr");
+				for (let i = 0; i < ary_pdt_img.length; i++) {
+					let td = document.createElement("td");
+					let link=trim(ary_pdt_link[i].innerText);
+					let a=document.createElement("a");
+					a.setAttribute("href",link);
+					a.appendChild(ary_pdt_img[i]);
+					td.appendChild(a);
+					tr_pdt_img.appendChild(td);
+				}
+
+				tr_pdt_img.insertBefore(document.createElement("td"), tr_pdt_img.children[0]);
+				table.appendChild(tr_pdt_img);
+
+				let tr_pdt_title = document.createElement("tr");
+				for (let i = 0; i < ary_pdt_title.length; i++) {
+					let td = document.createElement("td");
+					let link=trim(ary_pdt_link[i].innerText);
+					let a=document.createElement("a");
+					a.setAttribute("href",link);
+					a.innerText = ary_pdt_title[i].innerText;
+                    td.appendChild(a);
+					tr_pdt_title.appendChild(td);
+				}
+				tr_pdt_title.insertBefore(document.createElement("td"), tr_pdt_title.children[0]);
+				table.appendChild(tr_pdt_title);
+				let ary_ary_pdt_attr_value = [];
+				for (let i = 0; i < ary_pdt_attr_value.length; i++) {
+					let str = ary_pdt_attr_value[i].innerText;
+					str = trim(str);
+					let ary = str.split("@@");
+					ary_ary_pdt_attr_value.push(ary);
+				}
+
+				for (let i = 0; i < ary_pdt_attr_name.length; i++) {
+					let tr = document.createElement("tr");
+					let td = document.createElement("td");
+					td.innerText = ary_pdt_attr_name[i].innerText;
+					tr.appendChild(td);
+					for (let j = 0; j < ary_ary_pdt_attr_value.length; j++) {
+						let td = document.createElement("td");
+						td.innerText = ary_ary_pdt_attr_value[j][i];
+						tr.appendChild(td);
+					}
+					table.appendChild(tr);
+				}
+				let div = document.createElement("div");
+				div.className = "pdt_compare_table_wrapper";
+				div.appendChild(table);
+				document.querySelector(".amz_pdt_desc_total_wrapper").appendChild(div);
+			}
+
+      init_amz_comparison(".amz_comparison");
+
+
+
+
+
+

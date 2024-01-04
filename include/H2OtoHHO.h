@@ -19,24 +19,33 @@
 // #include <LiquidCrystal.h>
 
 // include Project library header files
-#include "Localize.h"
+//#include "Localize.h"
 #include "LCDKeypad\LCDKeypad.h"
 #include "DFR_Key\DFR_Key.h"
 #include "pitches.h"
 #include "Tone.h"
 // #include "MenuItem.h"
 // #include "include\AD9850\AD9850.h"
+#include "AD985X.h"
+
+/* I\O PIN MAPPING SAINSMART LCDKeypad LiquidCrystal 1602 SHIELD  */
+#define PDO_LCD_RS 8
+#define PDO_LCD_ENABLE 9
+#define PDO_LCD_D4 4
+#define PDO_LCD_D5 5
+#define PDO_LCD_D6 6
+#define PDO_LCD_D7 7
 
 /* I\O PIN MAPPING AD9850 MODULE 0- Gate Frequency Generator  */
-#define PDO_DDS0_CLK 22
-#define PDO_DDS0_FREQ 23
-#define PDO_DDS0_DATA 24
+#define PDO_DDS0_W_CLK 22
+#define PDO_DDS0_FQ_UD 23
+#define PDO_DDS0_SERIAL_DATA 24
 #define PDO_DDS0_RESET 25
 
 /* I\O PIN MAPPING AD9850 MODULE 1- Pulse Frequency Generator */
-#define PDO_DDS1_CLK 26
-#define PDO_DDS1_FREQ 27
-#define PDO_DDS1_DATA 28
+#define PDO_DDS1_W_CLK 26
+#define PDO_DDS1_FQ_UD 27
+#define PDO_DDS1_SERIAL_DATA 28
 #define PDO_DDS1_RESET 29
 
 /* I\O PIN MAPPING BUZZER MODULE  */
@@ -145,16 +154,6 @@ enum ExecStatus
 };
 
 // library interface description
-/*
-  #define CURSOR_SELECT 0
-  #define CURSOR_LEFT 1
-  #define CURSOR_UP 2
-  #define CURSOR_DOWN 3
-  #define CURSOR_RIGHT 4
-  #define CUSTOM_LOCK 5
-  #define CUSTOM_WATER_MOLECULE 6
-  #define CUSTOM_WATER_MOLECULE2 7
-*/
 enum CustomLCDIcons
 {
   CURSOR_SELECT,
@@ -167,32 +166,31 @@ enum CustomLCDIcons
   CUSTOM_WATER_MOLECULE2
 };
 
-// class LCDKeypad;
-// class DFR_Key;
-// class AD9850;
-
-class H2OtoHHO : public Localize, LCDKeypad, DFR_Key
+class H2OtoHHO : public  LCDKeypad, DFR_Key //Localize,
 {
 public:
   H2OtoHHO();
   // enum SupportedLocale { EN_US, EN_JM };
   // int LoadLocale( String locale );
-  int UpdateMenu(int menu_id);
+  // int UpdateMenu(int menu_id);
   // static ExecStatus ResonanceScan();
   // static ExecStatus UpdateKeypress(int keypress);
   // int getKeyPress();
-  // const AD9850 gate, oscillator;
-  // typedef std::map<int, String> SubMenuList;
-  // struct MenuItem
+  AD9850 dds_gate, dds_pulse;
+  // const LCDKeypad lcd;
+  // const DFR_Key keypad;
+  //  typedef std::map<int, String> SubMenuList;
+  //  struct MenuItem
   //{
-  //   String itemName;
-  //   SubMenuList *SubMenu;
-  // };
-  // std::map<int, String> MainMenuList;
-  // MenuItem menuList;
-  // LCDKeypad screen;
+  //    String itemName;
+  //    SubMenuList *SubMenu;
+  //  };
+  //  std::map<int, String> MainMenuList;
+  //  MenuItem menuList;
 
 private:
+  int localKey;
+  String keyString;
   // int keyPress_cur = -1;
   //, keyPress_buffer[KEYPRESS_BUFF_LEN];
 };

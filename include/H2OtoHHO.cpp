@@ -39,34 +39,31 @@
 
 /* Define static class data member INSTANCES */
 // int H2OtoHHO::keyPress_cur = -1;
-
-// H2OtoHHO::gate = new AD9850(PDO_DDS0_CLK, PDO_DDS0_FREQ, PDO_DDS0_DATA);                                       // w_clk, fq_ud, Sdata
-// H2OtoHHO::pulse = new AD9850(PDO_DDS1_CLK, PDO_DDS1_FREQ, PDO_DDS1_DATA);                                      // w_clk, fq_ud, Sdata
-
 //---------------------------------------------
 
-// gate(PDO_DDS0_CLK, PDO_DDS0_FREQ, PDO_DDS0_DATA),                                       // w_clk, fq_ud, Sdata
-// oscillator(PDO_DDS1_CLK, PDO_DDS1_FREQ, PDO_DDS1_DATA)                                  // w_clk, fq_ud, Sdata
-
-
 /* Define H2OtoHHO Class Constructor */
-// H2OtoHHO::H2OtoHHO() :  
-//     Localize()  //,LCDKeypad(), DFR_Key()
-// {
-//     // LCDKeypad screen();
-//     /* Initialize special character sets */
-//     // this->createChar(CURSOR_SELECT, c_select);
-//     // this->createChar(CURSOR_LEFT, c_left);
-//     // this->createChar(CURSOR_UP, c_up);
-//     // this->createChar(CURSOR_DOWN, c_down);
-//     // this->createChar(CURSOR_RIGHT, c_right);
-//     // this->createChar(CUSTOM_LOCK, custom_lock);
-//     // this->createChar(CUSTOM_WATER_MOLECULE, custom_watermol);
-//     // this->createChar(CUSTOM_WATER_MOLECULE2, custom_watermol2);
+H2OtoHHO::H2OtoHHO() : Localize(),
+                       LCDKeypad(PDO_LCD_RS, PDO_LCD_ENABLE, PDO_LCD_D4, PDO_LCD_D5, PDO_LCD_D6, PDO_LCD_D7),
+                       DFR_Key(),
+                       dds_gate(HIGH, PDO_DDS0_RESET, PDO_DDS0_FQ_UD, PDO_DDS0_SERIAL_DATA, PDO_DDS0_W_CLK),  // w_clk, fq_ud, Sdata
+                       dds_pulse(HIGH, PDO_DDS1_RESET, PDO_DDS1_FQ_UD, PDO_DDS1_SERIAL_DATA, PDO_DDS1_W_CLK), // w_clk, fq_ud, Sdata
+                       localKey(0),
+                       keyString("")
+{
+  // LCDKeypad screen();
+  /* Initialize special character sets */
+  createChar(CURSOR_SELECT, c_select);
+  createChar(CURSOR_LEFT, c_left);
+  createChar(CURSOR_UP, c_up);
+  createChar(CURSOR_DOWN, c_down);
+  createChar(CURSOR_RIGHT, c_right);
+  createChar(CUSTOM_LOCK, custom_lock);
+  createChar(CUSTOM_WATER_MOLECULE, custom_watermol);
+  createChar(CUSTOM_WATER_MOLECULE2, custom_watermol2);
 
-//     // this->menuList = NULL;
-//     // menuList( NULL, NULL )
-// }
+  // this->menuList = NULL;
+  // menuList( NULL, NULL )
+}
 //---------------------------------------------
 
 /* Define H2OtoHHO Class member function used for loading configuration locale settings  */
@@ -96,11 +93,11 @@
 //---------------------------------------------
 
 /* Define H2OtoHHO Class member function used for updating the Menu Display Items  */
-int H2OtoHHO::UpdateMenu(int menu_id)
-{
+// int H2OtoHHO::UpdateMenu(int menu_id)
+// {
 
-    return (EXEC_SUCCESS);
-}
+//   return (EXEC_SUCCESS);
+// }
 //---------------------------------------------
 
 /* Define H2OtoHHO Class member function used for accessing the current function keypress  */
